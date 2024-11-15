@@ -354,39 +354,25 @@ def clear_username(username):
     else:
         return f"Нікнейм {username} не знайдений."
 
+# Множина для збереження використаних нікнеймів
+used_names = set()
+
 # Функція для очищення всіх нікнеймів
 def clear_all_usernames():
     global used_names  # Використовуємо глобальну змінну used_names
-    used_names.clear()  # Очищаємо множину всіх нікнеймів
-    print("Усі нікнейми були очищені.")  # Виводимо повідомлення для відлагодження
-    return "Усі нікнейми були успішно очищені."
+    used_names.clear()  # Очищаємо множину
+    print("Всі нікнейми були очищені.")  # Можна додати повідомлення для відлагодження
+    return "Ваші нікнейми були успішно очищені. Користувачі можуть реєструватися знову."
 
-# Перевірка команди /clear_username
-@bot.message_handler(commands=['clear_username'])
-def clear_username_command(message):
+# Перевірка команди /clear_usernames
+@bot.message_handler(commands=['clear_usernames'])
+def clear_usernames(message):
     # Перевірка, чи є у користувача права адміністратора
     if message.from_user.id == 5707773847:  # Замість YOUR_ADMIN_USER_ID введіть свій ID
-        # Отримуємо нікнейм, який потрібно очистити
-        username_to_clear = message.text.split(" ", 1)  # Розділяємо команду і нікнейм
-        if len(username_to_clear) < 2:
-            bot.send_message(message.chat.id, "Будь ласка, введіть нікнейм для очищення після команди. Наприклад: /clear_username Нікнейм")
-        else:
-            result_message = clear_username(username_to_clear[1])  # Очищаємо конкретний нікнейм
-            bot.send_message(message.chat.id, result_message)
-    else:
-        bot.send_message(message.chat.id, "У вас немає прав для цієї команди.")
-
-# Перевірка команди /clear_all_usernames
-@bot.message_handler(commands=['clear_all_usernames'])
-def clear_all_usernames_command(message):
-    # Перевірка, чи є у користувача права адміністратора
-    if message.from_user.id == 5707773847:  # Замість YOUR_ADMIN_USER_ID введіть свій ID
-        result_message = clear_all_usernames()  # Очищаємо всі нікнейми
+        result_message = clear_all_usernames()
         bot.send_message(message.chat.id, result_message)
     else:
         bot.send_message(message.chat.id, "У вас немає прав для цієї команди.")
-
-
 
 
 # В кінці основного коду
