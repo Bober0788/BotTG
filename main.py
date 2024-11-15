@@ -54,7 +54,10 @@ def start(message):
         bot.send_message(message.chat.id, "Вітаю! Це симулятор президента в ТГ. Напишіть ім'я персонажа.")
         bot.register_next_step_handler(message, set_username)
     else:
-        show_main_menu(message)
+        if user_data[user_id]['name'] in used_names:
+            bot.send_message(message.chat.id, "Це ім'я вже зареєстроване. Введіть пароль.")
+        else:
+            show_main_menu(message)
 
 # Функція для встановлення імені персонажа
 def set_username(message):
@@ -65,6 +68,7 @@ def set_username(message):
         bot.send_message(message.chat.id, "Це ім'я вже зайняте. Спробуйте інше.")
         bot.register_next_step_handler(message, set_username)
         return
+
 
     used_names.add(username)
     user_data[user_id] = {
@@ -337,8 +341,29 @@ def send_message_to_user_command(message):
     else:
         bot.send_message(message.chat.id, "Тільки адміністратор може використовувати цю команду.")
 
-# В кінці основного коду
+# Множина для збереження використаних нікнеймів
+used_names = set()
 
+# Функція для очищення всіх нікнеймів
+def clear_all_usernames():
+    global used_names  # Використовуємо глобальну змінну used_names
+    used_names.clear()  # Очищаємо множину
+    print("Всі нікнейми були очищені.")  # Можна додати повідомлення для відлагодження
+    return "Ваші нікнейми були успішно очищені. Користувачі можуть реєструватися знову."
+
+# Перевірка команди /clear_usernames
+@bot.message_handler(commands=['clear_usernames'])
+def clear_usernames(message):
+    # Перевірка, чи є у користувача права адміністратора
+    if message.from_user.id == 5707773847:  # Замість YOUR_ADMIN_USER_ID введіть свій ID
+        result_message = clear_all_usernames()
+        bot.send_message(message.chat.id, result_message)
+    else:
+        bot.send_message(message.chat.id, "У вас немає прав для цієї команди.")
+
+
+
+# В кінці основного коду
 if __name__ == '__main__':
     bot.polling(none_stop=True, interval=0)
 
