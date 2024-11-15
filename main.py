@@ -2,6 +2,7 @@ import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from datetime import datetime, timedelta
 import random
+import threading
 import time
 
 # Токен бота
@@ -271,5 +272,94 @@ def check_buildings():
 # Запуск фону для перевірки будівництва
 threading.Thread(target=check_buildings, daemon=True).start()
 
-# Запуск бота
-bot.polling(none_stop=True)
+# Функція для додавання винагороди до балансу користувача
+def add_reward():
+    current_time = datetime.now()
+    if current_time.hour == 12 and current_time.minute == 0:  # Перевірка на 12:00
+        for user_id in user_data:
+            user_data[user_id]['balance'] += 35  # Додаємо 35 млн до балансу
+            bot.send_message(user_id, "Прийшла винагорода: +35 млн$")
+    elif current_time.hour == 22 and current_time.minute == 0:  # Перевірка на 22:00
+        for user_id in user_data:
+            user_data[user_id]['balance'] += 35  # Додаємо 35 млн до балансу
+            bot.send_message(user_id, "Прийшла винагорода: +35 млн$")
+
+# Функція для періодичної перевірки і додавання винагороди кожні 60 секунд
+def check_rewards_periodically():
+    while True:
+        add_reward()
+        time.sleep(60)  # Перевіряємо кожні 60 секунд
+
+# Запуск функції перевірки в окремому потоці
+def start_reward_thread():
+    reward_thread = threading.Thread(target=check_rewards_periodically)
+    reward_thread.daemon = True
+    reward_thread.start()
+
+# Виклик функції для запуску потоку
+start_reward_thread()
+
+# Функція для надсилання повідомлення всім користувачам
+def send_message_to_all(bot, user_data, message_text):
+    for user_id in user_data:
+        bot.send_message(user_id, message_text)
+
+# Функція для надсилання повідомлення конкретному користувачу
+def send_message_to_user(bot, user_id, message_text):
+    bot.send_message(user_id, message_text)
+
+# Команда для адміністратора для надсилання повідомлення всім користувачам
+@bot.message_handler(commands=['send_to_all'])
+def send_message_from_admin(message):
+    admin_user_id = 5707773847  # Ваш ID адміністратора
+    if message.chat.id == admin_user_id:
+        message_text = message.text[len('/send_to_all '):]  # Отримуємо текст після команди
+        send_message_to_all(bot, user_data, message_text)
+        bot.send_message(message.chat.id, "Повідомлення надіслано всім гравцям.")
+    else:
+        bot.send_message(message.chat.id, "Тільки адміністратор може використовувати цю команду.")
+
+# Команда для адміністратора для надсилання повідомлення конкретному користувачу
+@bot.message_handler(commands=['send_to_user'])
+def send_message_to_user_command(message):
+    admin_user_id = 5707773847  # Ваш ID адміністратора
+    if message.chat.id == admin_user_id:
+        # Формат команди: /send_to_user <user_id> <повідомлення>
+        try:
+            parts = message.text.split(' ', 2)
+            target_user_id = int(parts[1])  # Ідентифікатор користувача
+            message_text = parts[2]  # Текст повідомлення
+            send_message_to_user(bot, target_user_id, message_text)
+            bot.send_message(message.chat.id, f"Повідомлення надіслано користувачу {target_user_id}.")
+        except Exception as e:
+            bot.send_message(message.chat.id, "Невірний формат команди. Спробуйте ще раз.")
+            print(f"Error: {e}")
+    else:
+        bot.send_message(message.chat.id, "Тільки адміністратор може використовувати цю команду.")
+
+# В кінці основного коду
+
+if __name__ == '__main__':
+    bot.polling(none_stop=True, interval=0)
+
+
+# Функція для запуску бота в окремому потоці
+def start_bot():
+    bot.polling(none_stop=True, interval=0)
+
+# Функція для перевірки стану потоку та автоматичного перезапуску бота
+def run_bot():
+    bot_thread = threading.Thread(target=start_bot)
+    bot_thread.daemon = True
+    bot_thread.start()
+
+    while True:
+        time.sleep(10)
+        if not bot_thread.is_alive():
+            print("Бот зупинився, перезапуск...")
+            bot_thread = threading.Thread(target=start_bot)
+            bot_thread.daemon = True
+            bot_thread.start()
+
+if __name__ == '__main__':
+    run_bot()
